@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+build/
+develop-eggs/
+dist/
+eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyCharm project files
+.idea/
+
+# Logs and other runtime files
+*.log
+*.pot
+*.mo
+*.swp
+*.swo
+*.tmp
+*.bak
+*.pid
+*.seed
+*.backup
+*.orig
+*.rej
+*.spec
+
+# Environment variables
+.env
+*.env
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Static and dynamic files
+staticfiles/
+media/
