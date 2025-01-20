@@ -24,7 +24,7 @@
   - [Example: Integrating Selenium with Vansah](#example-integrating-selenium-with-vansah)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
-- [License](#license)
+- [Developed By](#developed-by)
 
 ---
 
@@ -40,7 +40,7 @@
 ---
 
 ## Installation
-To get started with `VansahNode`, ensure you have Python 3.7+ installed. Then, install the required modules:
+To get started with `VansahNode`, ensure you have [Python 3.12+](https://www.python.org/downloads/) installed for Windows, Linux and MacOS. Then, install the required modules:
 
 ```bash
 pip install requests
@@ -56,8 +56,8 @@ pip install -r requirements.txt
 
 ## Setup and Configuration
 ### Prerequisites
-- **Vansah API Token**: Obtain your API token from the Vansah Test Management system.
-- **Vansah URL**: The base URL for your Vansah instance (e.g., `https://prod.vansah.com`) or Obtain your Vansah Connect URL from Vansah Settings > Vansah API Tokens
+- **Vansah API Token**: Obtain your [API token](https://help.vansah.com/en/articles/9824979-generate-a-vansah-api-token-from-jira) from your Jira workspace.
+- **Vansah URL**: The base URL for your Vansah instance (e.g., `https://prod.vansah.com`) or Obtain your [Vansah Connect URL](https://help.vansah.com/en/articles/10407923-vansah-api-connect-url) from Vansah API Tokens
 .
 
 ### Basic Configuration
@@ -140,7 +140,7 @@ from VansahNode import VansahNode
 
 # Initialize VansahNode
 vansahnode = VansahNode()
-vansahnode.set_vansah_url("https://vtrunk.vansahnode.app")
+vansahnode.set_vansah_url("https://prod.vansah.com")
 vansahnode.set_vansah_token("<YOUR_API_TOKEN>")
 vansahnode.set_sprint_name("Sprint 1")
 vansahnode.set_environment_name("UAT")
