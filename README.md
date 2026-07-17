@@ -34,10 +34,7 @@
   - [Folder Path, Advanced Test Plan (ATP), and Standard Test Plan (STP)](#folder-path-advanced-test-plan-atp-and-standard-test-plan-stp)
 - [Methods Overview](#methods-overview)
 - [Setter Methods of Vansah Binding](#setter-methods-of-vansah-binding)
-- [Documentation](#documentation)
-- [Running the tests](#running-the-tests)
 - [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
 - [Developed By](#developed-by)
 
 ---
@@ -297,25 +294,6 @@ Enables or disables **request-payload logging**. When enabled, the JSON body sen
 
 ---
 
-## Documentation
-
-A step-by-step help article is available in [`docs/How-to-send-test-results-to-Vansah-from-Python.docx`](/docs/How-to-send-test-results-to-Vansah-from-Python.docx).
-
----
-
-## Running the tests
-
-[`test_vansah_node.py`](/test_vansah_node.py) contains a full integration suite. It is driven entirely by a local `.env` file (copy `.env` and fill in real values) and every network test is **skipped** (not failed) when `VANSAH_TOKEN` is blank, so it is safe to run without credentials.
-
-```bash
-pip install requests pytest
-pytest -v test_vansah_node.py
-```
-
-`.env` is already listed in `.gitignore` — never commit a real token.
-
----
-
 ## Troubleshooting
 
 1. **`TEST_RUN_IDENTIFIER is not set` / "Please start a test run before recording a step result"**
@@ -331,12 +309,6 @@ pytest -v test_vansah_node.py
    - Check the file path provided for the screenshot. Invalid paths are skipped with a warning.
 
 Turn on `set_debug(True)` (or set `VANSAH_DEBUG=1`) to print each outgoing request payload while diagnosing issues.
-
----
-
-## Contributing
-
-We welcome contributions! Please feel free to submit issues or pull requests to improve this library.
 
 ---
 
