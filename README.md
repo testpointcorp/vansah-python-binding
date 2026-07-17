@@ -47,7 +47,6 @@
 - Set a custom API URL and token for authentication.
 - Easily connect your Python applications with `Vansah Test Management for Jira` to report test results and update test runs without manual intervention.
 - Report results as a single overall verdict (Quick Test) or **step by step**, against a **Jira issue**, a **test folder**, a **Standard Test Plan**, or an **Advanced Test Plan**.
-- **Iterate** over every step of a test case — a run is created `Untested` so Vansah pre-creates one log per step, and each result updates the correct step log in place.
 - Target a specific **Test Plan iteration** (1–5).
 - Attach **screenshots** to test steps for more detailed reporting and analysis.
 - Request-payload logging (`set_debug`) to troubleshoot integration issues; the token is sent as a header and is never printed.
