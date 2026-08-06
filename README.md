@@ -10,15 +10,12 @@
 </p>
 <hr>
 
-> [!WARNING]
-> **⚠️ Upcoming breaking change — v1 API will be discontinued**
+> ⚠️ **API Token Update Required**
 >
-> **Vansah API v1** will stop working once Vansah migrates to the Forge platform. This integration will be non-functional after that point until it is updated to use **Vansah API v2**.
-
-> [!NOTE]
-> **🚀 Vansah API v2 — Coming Soon**
+> Existing Vansah Connect tokens must be regenerated to continue using integrations. All Connect-based integrations and bindings must use the Vansah API v2 endpoint (`<your-vansah-connect-url>/api/v2/`). **This binding already targets v2.**
 >
-> This repository will be updated with full v2 support before the migration. **Watch this repo** to get notified when the update is released.
+> - Generate a new Vansah API token
+> - Test your integrations to ensure continuity post-release
 >
 > In the meantime, for more details check out:
 > - [Vansah for Jira — May 2026 Forge Release](https://help.vansah.com/en/articles/13298303-vansah-for-jira-may-2026)
@@ -28,186 +25,290 @@
 <hr>
 
 ## Table of Contents
-- [Overview](#overview)
 - [Features](#features)
+- [Prerequisite](#prerequisite)
 - [Installation](#installation)
-- [Setup and Configuration](#setup-and-configuration)
-  - [Prerequisites](#prerequisites)
-  - [Basic Configuration](#basic-configuration)
-- [Usage](#usage)
-  - [1. Create a Test Run from Jira Issue](#1-create-a-test-run-from-jira-issue)
-  - [2. Log Test Results](#2-log-test-results)
-  - [3. Manage Test Artifacts](#3-manage-test-artifacts)
-- [Use Case: Sending Test Results from Automation Framework to Vansah](#use-case-sending-test-results-from-automation-framework-to-vansah)
-  - [Example: Integrating Selenium with Vansah](#example-integrating-selenium-with-vansah)
+- [Configuration](#configuration)
+- [Usage examples](#usage-examples)
+  - [Step-by-step execution against a Jira Issue](#step-by-step-execution-against-a-jira-issue)
+  - [Folder Path, Advanced Test Plan (ATP), and Standard Test Plan (STP)](#folder-path-advanced-test-plan-atp-and-standard-test-plan-stp)
+- [Methods Overview](#methods-overview)
+- [Setter Methods of Vansah Binding](#setter-methods-of-vansah-binding)
 - [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
 - [Developed By](#developed-by)
 
 ---
 
-## Overview
-`VansahNode` is a Python library that allows you to interact with the Vansah Test Management system for Jira. This library helps automate the process of adding test runs, logging test results, and managing test artifacts in Vansah directly from your automation framework.
-
 ## Features
-- Create test runs from Jira issues or test folders.
-- Log test results for individual test steps.
-- Attach screenshots or other artifacts to test logs.
-- Manage test runs and logs programmatically.
+
+- Set a custom API URL and token for authentication.
+- Easily connect your Python applications with `Vansah Test Management for Jira` to report test results and update test runs without manual intervention.
+- Report results as a single overall verdict (Quick Test) or **step by step**, against a **Jira issue**, a **test folder**, a **Standard Test Plan**, or an **Advanced Test Plan**.
+- Target a specific **Test Plan iteration** (1–5).
+- Attach **screenshots** to test steps for more detailed reporting and analysis.
+- Request-payload logging (`set_debug`) to troubleshoot integration issues; the token is sent as a header and is never printed.
+- Detailed documentation and usage examples to help you get started quickly.
+
+---
+
+## Prerequisite
+
+- Make sure that [`Vansah`](https://marketplace.atlassian.com/apps/1224250/vansah-test-management-for-jira?tab=overview&hosting=cloud) is installed in your Jira workspace.
+- Generate a Vansah [`connect`](https://help.vansah.com/en/articles/9824979-generate-a-vansah-api-token-from-jira) token to authenticate with the Vansah APIs.
+- [Python 3.8+](https://www.python.org/downloads/) installed for Windows, Linux, or macOS.
+- The `requests` library (see [Installation](#installation)).
 
 ---
 
 ## Installation
-To get started with `VansahNode`, ensure you have [Python 3.12+](https://www.python.org/downloads/) installed for Windows, Linux and MacOS. Then, install the required modules:
+
+Install the required module:
 
 ```bash
 pip install requests
 ```
 
-You can also install other dependencies (if applicable):
+Or, if a `requirements.txt` is provided:
 
 ```bash
 pip install -r requirements.txt
 ```
 
+Then copy [`VansahNode.py`](/VansahNode.py) into your test project and import it:
+
+```python
+from VansahNode import VansahNode
+```
+
 ---
 
-## Setup and Configuration
-### Prerequisites
-- **Vansah API Token**: Obtain your [API token](https://help.vansah.com/en/articles/9824979-generate-a-vansah-api-token-from-jira) from your Jira workspace.
-- **Vansah URL**: The base URL for your Vansah instance (e.g., `https://prod.vansah.com`) or Obtain your [Vansah Connect URL](https://help.vansah.com/en/articles/10407923-vansah-api-connect-url) from Vansah API Tokens
-.
+## Configuration
 
-### Basic Configuration
-Set up your `VansahNode` instance by configuring the following:
+Provide your Vansah [`connect`](https://help.vansah.com/en/articles/9824979-generate-a-vansah-api-token-from-jira) token. You have two options:
 
-1. **Vansah URL**
-2. **Sprint, Environment, and Release details**
-3. **API Token**
-4. **Jira Issue Key or Test Folder ID**
+- Set it directly on the instance:
 
-Example:
+  ```python
+  vansah = VansahNode()
+  vansah.set_vansah_token("Add your Token here")
+
+  # Optional: set a custom API URL (from Vansah Settings > Vansah API Tokens)
+  vansah.set_vansah_url("https://<your-vansah-connect-url>")
+  ```
+
+- Or read it from an environment variable so it never lands in source control:
+
+  ```python
+  import os
+  vansah = VansahNode()
+  vansah.set_vansah_token(os.environ.get("VANSAH_TOKEN"))
+  ```
+
+A minimal configuration looks like:
 
 ```python
 from VansahNode import VansahNode
 
-# Initialize the VansahNode instance
-vansahnode = VansahNode()
-
-# Set up configuration
-vansahnode.set_vansah_url("https://prod.vansah.com")
-vansahnode.set_vansah_token("<YOUR_API_TOKEN>")
-vansahnode.set_sprint_name("Sprint 1")
-vansahnode.set_environment_name("UAT")
-vansahnode.set_release_name("Release 1")
-vansahnode.set_jira_issue_key("PROJECT-123")
-
-#Add Project Key in case of Test Folder runs
-vansahnode.set_project_key("PROJECT")
+vansah = VansahNode()
+vansah.set_vansah_url("https://prod.vansah.com")
+vansah.set_vansah_token("<YOUR_API_TOKEN>")
+vansah.set_project_key("DEMO")          # Space Key (Jira project key) — required for API v2
+vansah.set_jira_issue_key("DEMO-1")
+vansah.set_test_folders_path("regression/login/")
+vansah.set_sprint_name("Sprint 1")
+vansah.set_environment_name("UAT")
+vansah.set_release_name("Release 1")
 ```
 
 ---
 
-## Usage
+## Usage examples
 
-### 1. Create a Test Run from Jira Issue
-Use the `add_test_run_from_jira_issue` method to create a test run linked to a Jira issue.
-
-```python
-# Create a test run for a specific test case
-TEST_CASE = "PROJECT-TC1"
-vansahnode.add_test_run_from_jira_issue(TEST_CASE)
-```
-
-### 2. Log Test Results
-Log results for specific test steps within a test run.
+### Step-by-step execution against a Jira Issue
 
 ```python
-# Log a test result with a screenshot
-vansahnode.add_test_log(
-    result="passed",  # Result: "passed", "failed", etc.
-    comment="Test step executed successfully.",
-    test_step_row=1,  # Step number
-    image_path=r"path/to/screenshot.png"  # Optional screenshot
-)
-```
-
-### 3. Manage Test Artifacts
-- **Remove a Test Run**:
-
-```python
-vansahnode.remove_test_run()  # Requires TEST_RUN_IDENTIFIER to be set
-```
-
-- **Remove a Test Log**:
-
-```python
-vansahnode.remove_test_log()  # Requires TEST_LOG_IDENTIFIER to be set
-```
-
----
-
-## Use Case: Sending Test Results from Automation Framework to Vansah
-
-### Example: Integrating Selenium with Vansah
-Here’s how you can send test results from a Selenium test script to Vansah:
-
-```python
-from selenium import webdriver
 from VansahNode import VansahNode
 
-# Initialize VansahNode
-vansahnode = VansahNode()
-vansahnode.set_vansah_url("https://prod.vansah.com")
-vansahnode.set_vansah_token("<YOUR_API_TOKEN>")
-vansahnode.set_sprint_name("Sprint 1")
-vansahnode.set_environment_name("UAT")
-vansahnode.set_release_name("Release 1")
-vansahnode.set_jira_issue_key("PROJECT-123")
+vansah = VansahNode()
+vansah.set_vansah_token("<YOUR_API_TOKEN>")
+vansah.set_project_key("DEMO")        # Space Key (Jira project key) — required for API v2
+vansah.set_jira_issue_key("DEMO-1")   # the work item this run is reported against
+vansah.set_environment_name("QA")
 
-# Set up Selenium
-driver = webdriver.Chrome()
+# Start a run for the test case (created Untested; results come from the step logs)
+vansah.add_test_run_from_jira_issue("DEMO-C1")
+
+# Log a result for each step of the test case
 try:
-    driver.get("https://example.com")
-    assert "Example Domain" in driver.title
-
-    # Create a test run
-    TEST_CASE = "PROJECT-TC1"
-    vansahnode.add_test_run_from_jira_issue(TEST_CASE)
-
-    # Log the result
-    vansahnode.add_test_log(
-        result="passed",
-        comment="Homepage loaded successfully.",
-        test_step_row=1,
-        image_path="path/to/screenshot.png"
-    )
+    # add_test_log(result, comment, step_number, screenshot_path=optional)
+    vansah.add_test_log("passed", "Step 1 executed successfully", 1)
+    vansah.add_test_log("passed", "Step 2 executed successfully", 2)
 except Exception as e:
-    vansahnode.add_test_log(
-        result="failed",
-        comment=f"Test failed with error: {e}",
-        test_step_row=1
-    )
-finally:
-    driver.quit()
+    # Update the step with a failure and a screenshot when something goes wrong
+    vansah.update_test_log("failed", f"Step failed: {e}", r"path/to/screenshot.png")
 ```
+
+### Folder Path, Advanced Test Plan (ATP), and Standard Test Plan (STP)
+
+```python
+from VansahNode import VansahNode
+
+vansah = VansahNode()
+vansah.set_vansah_url("https://prod.vansah.com")
+vansah.set_vansah_token("<YOUR_API_TOKEN>")
+vansah.set_project_key("KAN")                       # Space Key (Jira project key)
+vansah.set_test_folders_path("vansah test automation/regression 2025/")
+vansah.set_advanced_test_plan_key("KAN-P17")        # Advanced Test Plan key
+vansah.set_standard_test_plan_key("KAN-P18")        # Standard Test Plan key
+# vansah.set_test_plan_iteration(2)                 # optional — defaults to iteration 1
+
+TEST_CASE = "KAN-C17"
+
+# Test folder
+vansah.add_test_run_from_test_folder(TEST_CASE)
+vansah.add_test_log("passed", "Actual result for the Test Step", 1)
+
+# Advanced Test Plan (ATP) — asset type is "folder" or "issue"
+vansah.add_test_run_from_advanced_test_plan("folder", TEST_CASE)
+vansah.add_test_log("passed", "Actual result for the Test Step", 1)
+
+# Standard Test Plan (STP)
+vansah.add_test_run_from_standard_test_plan(TEST_CASE)
+vansah.add_test_log("passed", "Actual result for the Test Step", 1)
+```
+
+---
+
+## Methods Overview
+
+The `VansahNode` class provides a comprehensive interface for interacting with Vansah Test Management for Jira directly from Python. Below is a description of its public methods.
+
+### `add_test_run_from_jira_issue(testcase)`
+
+Creates a new test run linked to a specific Jira issue (set via `set_jira_issue_key`). The run is created `Untested`, with a log pre-created for each step; record each step's result with `add_test_log`.
+
+- **Parameters**:
+  - `testcase`: The test case key (e.g., `"DEMO-C1"`).
+
+### `add_test_run_from_test_folder(testcase)`
+
+Creates a new test run against a test folder (set the folder path via `set_test_folders_path`). The run is created `Untested`, with a log pre-created for each step.
+
+- **Parameters**:
+  - `testcase`: The test case key (e.g., `"KAN-C17"`).
+
+### `add_test_run_from_standard_test_plan(testcase)`
+
+Creates a new test run under a Standard Test Plan. Set the plan key first with `set_standard_test_plan_key(...)`. The run targets **iteration 1** by default; call `set_test_plan_iteration(...)` (range 1–5) beforehand to target a different iteration.
+
+- **Parameters**:
+  - `testcase`: The test case key to execute under the plan (e.g., `"KAN-C17"`).
+
+### `add_test_run_from_advanced_test_plan(test_plan_asset_type, testcase)`
+
+Creates a new test run under an Advanced Test Plan. Set the plan key first with `set_advanced_test_plan_key(...)`. Because a case can sit under more than one requirement, pass the requirement's asset type and set its matching key. The run targets **iteration 1** by default; call `set_test_plan_iteration(...)` beforehand to change it.
+
+- **Parameters**:
+  - `test_plan_asset_type`: The requirement the case runs under — `"folder"` (uses `set_test_folders_path`) or `"issue"` (uses `set_jira_issue_key`).
+  - `testcase`: The test case key to execute (e.g., `"KAN-C17"`).
+
+### `add_test_log(result, comment, test_step_row, image_path=None)`
+
+Records the result and actual outcome for a single step of the current test run. Call one of the `add_test_run_*` methods first.
+
+- **Parameters**:
+  - `result`: Step result — as a name (`"passed"`, `"failed"`, `"na"`, `"untested"` — case-insensitive) or a code (`2`, `1`, `0`, `3`).
+  - `comment`: Actual result text shown against the step.
+  - `test_step_row`: 1-based step number within the test case.
+  - `image_path` *(optional)*: Path to an image file to attach as evidence.
+
+### `update_test_log(result, comment, image_path=None)`
+
+Updates the most recently recorded step log with a new result, comment, and optionally a screenshot.
+
+### `add_quick_test_from_jira_issue(testcase, result)` and `add_quick_test_from_test_folder(testcase, result)`
+
+Creates a run and records a single overall result in one call — useful when a test is pass/fail as a whole and has no steps to report individually.
+
+- **Parameters**:
+  - `testcase`: The test case key.
+  - `result`: The overall result, as a name or a code.
+
+### `remove_test_run()` and `remove_test_log()`
+
+Deletes a previously created test run or the most recent test log. After a log is removed, the step keeps an `Untested` placeholder so it can be recorded again later.
+
+---
+
+## Setter Methods of Vansah Binding
+
+Configure the test context before creating runs or logs.
+
+### `set_vansah_token(vansah_token)`
+
+Sets the Vansah Connect token used to authenticate every request. Read it from an environment variable to keep it out of source control.
+
+### `set_vansah_url(vansah_url)`
+
+Sets a custom Vansah API URL. Obtain your Vansah Connect URL from **Vansah Settings > Vansah API Tokens**. If not set, the binding uses its default host (`https://prod.vansah.com`).
+
+### `set_project_key(project_key)`
+
+Sets the **Space Key** (the Jira project key) that scopes your test runs and logs. This is **required for the Vansah API v2** — it is sent as the top-level `project` object on every request (e.g., `"KAN"`). A null/empty value is ignored with a warning.
+
+### `set_test_folders_path(testfolder_path)`
+
+Sets the **Test Folder path** used by `add_test_run_from_test_folder` (and by an Advanced Test Plan run when its requirement is a folder), e.g., `"regression/login/"`. The path must contain at least one `/` and must not start with `/`.
+
+### `set_jira_issue_key(jira_issue_key)`
+
+Sets the Jira issue key used by `add_test_run_from_jira_issue` (and by an Advanced Test Plan run when its requirement is an issue).
+
+### `set_sprint_name(...)`, `set_release_name(...)`, `set_environment_name(...)`
+
+Optional run properties — the sprint, release/version, and environment (e.g., `"SYS"`, `"UAT"`) recorded against the run.
+
+### `set_standard_test_plan_key(test_plan_key)`
+
+Sets the Standard Test Plan key that `add_test_run_from_standard_test_plan(...)` runs against (e.g., `"KAN-P18"`). A null/empty value is ignored with a warning.
+
+### `set_advanced_test_plan_key(test_plan_key)`
+
+Sets the Advanced Test Plan key that `add_test_run_from_advanced_test_plan(...)` runs against (e.g., `"KAN-P17"`). A null/empty value is ignored with a warning.
+
+### `set_test_plan_iteration(iteration)`
+
+Sets the **iteration** to target when creating a run from a Standard or Advanced Test Plan. This is **optional** — if you never call it, runs default to **iteration 1**. Only call it when recording results against a specific iteration.
+
+- **Parameters**:
+  - `iteration`: The iteration to target. Valid range is **1–5**. Values outside this range are ignored (a warning is printed and the default of 1 is kept).
+
+> **Note:** The iteration applies only to `add_test_run_from_standard_test_plan(...)` and `add_test_run_from_advanced_test_plan(...)`. It has no effect on Jira-issue or test-folder runs.
+
+### `set_debug(debug)`
+
+Enables or disables **request-payload logging**. When enabled, the JSON body sent to Vansah is printed before each API call — useful for diagnosing a malformed folder path or a missing Space Key. The token is sent as a header and is never printed; screenshot attachments are omitted from the log. Debug logging is also enabled automatically when the `VANSAH_DEBUG` environment variable is set to `true` or `1`.
+
+- **Parameters**:
+  - `debug`: `True` to log outgoing request payloads, `False` to disable.
 
 ---
 
 ## Troubleshooting
-1. **Error: `TEST_RUN_IDENTIFIER is not set`**
-   - Ensure you call `add_test_run_from_jira_issue` or `add_test_run_from_test_folder` before logging test results.
 
-2. **Error: Authentication Failed**
-   - Verify your API token and Vansah URL.
+1. **`TEST_RUN_IDENTIFIER is not set` / "Please start a test run before recording a step result"**
+   - Ensure you call one of the `add_test_run_*` methods before logging test results.
 
-3. **File Not Found Error**
-   - Check the file path provided for screenshots or other artifacts.
+2. **Authentication failed / `JWT claim did not contain the issuer (iss)`**
+   - Regenerate your Vansah Connect token and confirm the binding is targeting **API v2** (it is by default). Verify your token and Vansah URL.
 
----
+3. **`Failed to validate asset from request` (errorCode 1306)**
+   - Check the folder path: it must not start with `/` and must contain at least one `/`. Enable `set_debug(True)` to inspect the outgoing payload.
 
-## Contributing
-We welcome contributions! Please feel free to submit issues or pull requests to improve this library.
+4. **File Not Found for screenshots**
+   - Check the file path provided for the screenshot. Invalid paths are skipped with a warning.
+
+Turn on `set_debug(True)` (or set `VANSAH_DEBUG=1`) to print each outgoing request payload while diagnosing issues.
 
 ---
 
